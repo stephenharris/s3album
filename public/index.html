@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html class="uk-background-muted">
+  <head>
+    <title>S3 Album Viewer</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.12"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/uikit@3.6.11/dist/css/uikit.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/uikit@3.6.11/dist/js/uikit.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/uikit@3.6.11/dist/js/uikit-icons.min.js"></script>
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300&display=swap" rel="stylesheet"> 
+    <link rel="stylesheet" href="style.css">
+  </head>
+  
+  <body class="uk-padding-small">
+    
+    
+    <div id="viewer" class="uk-container">
+    
+      <div>
+        <h1 class="uk-align-left">S3 Album Viewer</h1>
+        <div class="uk-align-right">
+          <button class="uk-button uk-margin-left uk-margin-right uk-button-primary"  :disabled="this.path == 'pictures/'" v-on:click="goUp($event)">Up <span uk-icon="icon: arrow-up"></span></button>
+          <button class="uk-button uk-margin-left uk-margin-right uk-button-primary" :disabled="selected.length < 1" v-on:click="clearSelection()">Clear selection <span uk-icon="icon: close"></span></button>
+          <!--<button class="uk-button uk-margin-left uk-margin-right uk-button-primary"  :disabled="selected.length < 1" v-on:click="downloadSelected()">Download <span uk-icon="icon: download"></span></button>-->
+          <button class="uk-button uk-margin-left uk-margin-right uk-button-danger" :disabled="selected.length < 1" uk-toggle="target: #delete-photos">Delete ({{ selected.length}}) <span uk-icon="icon: trash"></span></button>
+        </div>
+      </div>
+
+      <div style="clear:both">
+        <ul class="uk-breadcrumb uk-container">    
+          <li v-for="crumb in breadCrumbs()" v-on:click="selectPath($event, crumb.path)">
+          <a href="#"><span class="uk-margin-right" uk-icon="icon: folder"></span>{{ crumb.name }}</a>
+          </li>
+        </ul>
+      </div>
+      
+      <hr>
+
+      <div v-if="loading" class="uk-position-center">
+        <div uk-spinner></div>
+      </div>
+
+      
+      <ul id="subdirectories" class="uk-clearfix uk-panel" >
+        <li v-for="folder in folders" v-on:click="selectPath($event, folder.key)">
+          <button class="uk-button uk-button-primary">{{ folder.name }}</button>
+        </li>
+        </ul>
+      </ul>
+      
+      
+      <div class="uk-child-width-1-3@m" uk-grid uk-lightbox="animation: slide">
+        <div v-for="image in objects" class="image">
+            <a class="uk-inline"  :href="image.url" :data-caption="image.name">
+              <img loading="lazy"  height="200px" :src="image.url"/>
+            </a>
+            <label class="checkbox">
+              <input type="checkbox" v-model="selected" v-bind:value="image.key"  class="check-image" id="check2" />
+              <span class="checkmark"></span>
+            </label>
+            
+        </div>
+      </div>
+
+
+      <!-- This is the modal -->
+      <div id="delete-photos" uk-modal>
+          <div class="uk-modal-dialog uk-modal-body uk-margin-auto-vertical uk-overflow-auto">
+              <button class="uk-modal-close-default" type="button" uk-close></button>
+              <div class="uk-modal-header">
+                <h2 class="uk-modal-title">Are you sure you want to delete {{ selected.length }} photo{{ selected.length > 1 ? 's' : '' }}?</h2>
+              </div>
+              <ul id="selected">
+                <li v-for="photo in selected">
+                  {{ photo }}
+                </li>
+              </ul>
+              <button class="uk-modal-close uk-button uk-button-default" type="button">Cancel</button>
+              <button class="uk-button uk-button-danger" v-on:click="confirmDelete($event)" type="button">Delete</button>
+          </div>
+      </div>
+
+    </div>
+    
+    <script src="./PhotoViewer.js"></script>
+  </body>
+</html>

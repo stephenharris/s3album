@@ -1,0 +1,18 @@
+on: 
+    release:
+      types: [created]
+  
+  jobs:
+    releases-matrix:
+      name: Release Go Binary
+      runs-on: ubuntu-latest
+      steps:
+      - uses: actions/checkout@v2
+      - uses: wangyoucao577/go-release-action@v1.12
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          goos: linux
+          goarch: arm
+          build_command: GOARM=5 go build
+          goversion: 1.15
+          binary_name: "s3album"
