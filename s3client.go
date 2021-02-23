@@ -1,10 +1,12 @@
 package main
 
 import (
+	"fmt"
 	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/s3"
 )
 
@@ -69,28 +71,42 @@ func (c *S3Client) listObjects(path string) S3ListObjectsOut {
 
 func (c *S3Client) bulkDeleteKeys(keys []string) {
 
-	var objects []*s3.ObjectIdentifier
+	objectsToDelete := make([]*s3.ObjectIdentifier, 0, len(keys))
 	for _, key := range keys {
-		objects = append(objects, &s3.ObjectIdentifier{
-			Key: &key,
-		})
+		print(key + "\n")
+		obj := s3.ObjectIdentifier{
+			Key: aws.String(key),
+		}
+		objectsToDelete = append(objectsToDelete, &obj)
 	}
 
-	_, err := c.svc.DeleteObjects(&s3.DeleteObjectsInput{
+	deleteArray := s3.Delete{Objects: objectsToDelete}
+	deleteParams := &s3.DeleteObjectsInput{
 		Bucket: aws.String(c.bucket),
-		Delete: &s3.Delete{
-			Objects: objects,
-		},
-	})
-	//
-	//signedURL, err := req.Presign(24 * time.Hour)
-	//
+		Delete: &deleteArray,
+	}
+
+	result, err := c.svc.DeleteObjects(deleteParams)
+
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+
 	if err != nil {
 		print("Failed to sign request", err)
 	}
-	/**
-	curl -X DELETE localhost:8090/api/objects -H "Accept: application/json" -d "[\"helllow\", \"world\"]"
-	*/
 
 }
 
@@ -106,8 +122,6 @@ func (c *S3Client) generateSignedURL(key string) string {
 	if err != nil {
 		print("Failed to sign request", err)
 	}
-
-	print("The URL is", signedURL)
 
 	return signedURL
 }
