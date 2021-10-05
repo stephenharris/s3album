@@ -24,6 +24,8 @@ type S3Object struct {
 	Key  string `json:"key"`
 	Name string `json:"name"`
 	Url  string `json:"url"`
+	Thumbnail  string `json:"thumbnail"`
+	Video bool `json:"video"`
 }
 
 type S3Folder struct {
@@ -46,10 +48,22 @@ func (c *S3Client) listObjects(path string) S3ListObjectsOut {
 
 	var objects []S3Object
 	for _, item := range resp.Contents {
+
+		
+		thumbnailKey := "thumbnail/" + *item.Key
+		
+		if (isVideo(*item.Key)) {
+			thumbnailKey = thumbnailKey + ".jpg"
+		}
+
+		thumbnail := c.generateSignedURL(thumbnailKey)
+
 		objects = append(objects, S3Object{
 			Key:  *item.Key,
 			Name: *item.Key,
 			Url:  c.generateSignedURL(*item.Key),
+			Thumbnail: thumbnail,
+			Video: isVideo(*item.Key),
 		})
 	}
 
@@ -124,4 +138,11 @@ func (c *S3Client) generateSignedURL(key string) string {
 	}
 
 	return signedURL
+}
+
+func isVideo(key string) bool {
+	return (
+		strings.HasSuffix(strings.ToLower(key), ".avi") || 
+		strings.HasSuffix(strings.ToLower(key), ".3gp") || 
+		strings.HasSuffix(strings.ToLower(key), ".mp4") )
 }
