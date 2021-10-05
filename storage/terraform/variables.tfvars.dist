@@ -1,0 +1,3 @@
+bucket_name="stephen.harris-documents"
+region="us-east-1"
+src_object_prefix="pictures/"

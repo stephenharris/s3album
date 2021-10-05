@@ -1,0 +1,8 @@
+.terraform
+ffmpeg
+ffmpeg.zip
+ffmpeg-*
+*.tfstate
+*.tfstate.backup
+thumbnail_generator.zip
+*variables.tfvars
