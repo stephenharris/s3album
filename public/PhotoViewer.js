@@ -29,13 +29,18 @@ var app = new Vue({
 
       return breadCrumbs;
     },
-    downloadSelected: function () {
-      //TODO
+    downloadSelected: async function () {
+      this.loading = true;
+      UIkit.modal("#downloading-photos").show();
+      await bulkDownload(this.selected)
+      this.loading = false;
+      UIkit.modal("#downloading-photos").hide();
     },
     clearSelection: function () {
       this.selected = [];
     },
     confirmDelete: async function (event) {
+      this.loading = true;
       await deleteObjects(this.selected);
       this.clearSelection();
       await this.fetchData();
@@ -86,5 +91,24 @@ function deleteObjects(objects) {
   .catch((err) => {
     alert(err.msg)
     console.log(err);
+  });
+}
+
+function bulkDownload(objects) {
+  return fetch(`${s3albumApiEndpoint}/download/`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json; charset=UTF-8'
+    },
+    body: JSON.stringify(objects)
+  })
+  .catch((err) => {
+    alert(err.msg)
+    console.log(err);
+  })
+  .then( res => res.blob() )
+  .then( blob => {
+    var file = window.URL.createObjectURL(blob);
+    window.location.assign(file);
   });
 }

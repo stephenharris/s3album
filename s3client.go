@@ -8,7 +8,21 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+	"archive/zip"
+	"net/http"
+	"io"
+	"path"
 )
+
+type FakeWriterAt struct {
+    w io.Writer
+}
+
+func (fw FakeWriterAt) WriteAt(p []byte, offset int64) (n int, err error) {
+    // ignore 'offset' because we forced sequential downloads
+    return fw.w.Write(p)
+}
 
 type S3Client struct {
 	svc    *s3.S3
@@ -80,6 +94,37 @@ func (c *S3Client) listObjects(path string) S3ListObjectsOut {
 		Objects: objects,
 		Folders: folders,
 	}
+
+}
+
+func (c *S3Client) bulkDownload(w http.ResponseWriter, keys []string) {
+
+	downloader := s3manager.NewDownloaderWithClient(c.svc)
+	downloader.Concurrency = 1
+
+	zipWriter := zip.NewWriter(w)
+	
+	for _, fn := range keys {
+		fmt.Printf("Processing '%s'\n", fn)
+
+		zw, err := zipWriter.Create(path.Base(fn))
+
+		if err != nil {
+			panic(err)
+		}
+
+		_, err = downloader.Download(FakeWriterAt{zw},
+			&s3.GetObjectInput{
+				Bucket: aws.String(c.bucket),
+				Key:    aws.String(fn),
+			})
+
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	zipWriter.Close()
 
 }
 

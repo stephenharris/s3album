@@ -45,6 +45,8 @@ func main() {
 
 	http.HandleFunc("/api/objects/", controller.handleObjectsEndpoint)
 
+	http.HandleFunc("/api/download/", controller.handleDownloadsEndpoint)
+
 	http.ListenAndServe(":8090", nil)
 }
 

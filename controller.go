@@ -89,3 +89,18 @@ func (c *Controller) bulkDeleteObjects(w http.ResponseWriter, req *http.Request)
 	w.Write(js)
 
 }
+
+func (c *Controller) handleDownloadsEndpoint(w http.ResponseWriter, req *http.Request) {
+
+	var keys []string
+	err := json.NewDecoder(req.Body).Decode(&keys)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	w.Header().Add("Content-Disposition", "attachment; filename=test.zip")
+	w.Header().Add("Content-Type", "application/zip")
+	c.s3Client.bulkDownload(w, keys)
+	
+}
